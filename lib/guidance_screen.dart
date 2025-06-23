@@ -24,7 +24,7 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
   StreamSubscription? _sensorsSubscription;
   double _pitch = 0.0;
   double _roll = 0.0;
-  
+
   // Target state (from the "golden image")
   double? _targetPitch;
   double? _targetRoll;
@@ -51,10 +51,15 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
   }
 
   void _initializeSensors() {
-    _sensorsSubscription = accelerometerEvents.listen((AccelerometerEvent event) {
+    _sensorsSubscription = accelerometerEvents.listen((
+      AccelerometerEvent event,
+    ) {
       // Simple algorithm to calculate pitch and roll from accelerometer data
       // This gives a good approximation for a top-down orientation
-      final double pitchRad = math.atan2(-event.x, math.sqrt(event.y * event.y + event.z * event.z));
+      final double pitchRad = math.atan2(
+        -event.x,
+        math.sqrt(event.y * event.y + event.z * event.z),
+      );
       final double rollRad = math.atan2(event.y, event.z);
 
       if (mounted) {
@@ -77,7 +82,7 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
     try {
       await _initializeControllerFuture;
       final image = await _cameraController!.takePicture();
-      
+
       setState(() {
         _goldenImage = image;
         // Set the current pitch and roll as the target to match
@@ -86,8 +91,8 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Golden Image and Target Angles Set!')));
-
+        const SnackBar(content: Text('Golden Image and Target Angles Set!')),
+      );
     } catch (e) {
       debugPrint("Error taking picture: $e");
     }
@@ -143,9 +148,9 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
                     ),
                   ),
                 ),
-                
+
                 // Layer 4: UI Information and Controls
-                _buildControlsAndInfoUI(),
+                SafeArea(child: _buildControlsAndInfoUI()),
               ],
             );
           } else {
@@ -157,8 +162,10 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
   }
 
   Widget _buildControlsAndInfoUI() {
-    final bool isPitchAligned = _targetPitch != null && (_pitch - _targetPitch!).abs() < 2.0;
-    final bool isRollAligned = _targetRoll != null && (_roll - _targetRoll!).abs() < 2.0;
+    final bool isPitchAligned =
+        _targetPitch != null && (_pitch - _targetPitch!).abs() < 2.0;
+    final bool isRollAligned =
+        _targetRoll != null && (_roll - _targetRoll!).abs() < 2.0;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -170,12 +177,17 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildAngleIndicator("Pitch", _pitch, _targetPitch, isPitchAligned),
+              _buildAngleIndicator(
+                "Pitch",
+                _pitch,
+                _targetPitch,
+                isPitchAligned,
+              ),
               _buildAngleIndicator("Roll", _roll, _targetRoll, isRollAligned),
             ],
           ),
         ),
-        
+
         // Bottom Control Panel
         Container(
           padding: const EdgeInsets.all(16.0),
@@ -184,6 +196,7 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                 onPressed: _setGoldenImage,
                 child: const Text('Set Golden Image'),
               ),
@@ -194,22 +207,30 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
               ),
             ],
           ),
-        )
+        ),
       ],
     );
   }
 
-  Widget _buildAngleIndicator(String name, double value, double? target, bool isAligned) {
+  Widget _buildAngleIndicator(
+    String name,
+    double value,
+    double? target,
+    bool isAligned,
+  ) {
     Color indicatorColor = Colors.white;
     if (target != null) {
       indicatorColor = isAligned ? Colors.greenAccent : Colors.orangeAccent;
     }
-    
+
     return Column(
       children: [
         Text(
           name,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
