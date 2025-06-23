@@ -6,6 +6,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
+import 'package:gal/gal.dart';
 
 class GuidanceScreen extends StatefulWidget {
   const GuidanceScreen({super.key});
@@ -69,6 +70,36 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
         });
       }
     });
+  }
+
+  void _takePhotoAndSave() async {
+    try {
+      // Ensure the camera is initialized before taking a picture.
+      await _initializeControllerFuture;
+      if (_cameraController == null || !_cameraController!.value.isInitialized) {
+        debugPrint("Camera not initialized or not ready.");
+        return;
+      }
+
+      final XFile image = await _cameraController!.takePicture();
+      debugPrint("Picture taken, temporary path: ${image.path}");
+
+      // Save the image to the gallery.
+      await Gal.putImage(image.path);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Photo saved to gallery!')),
+        );
+      }
+    } catch (e) {
+      debugPrint("Error taking photo: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving photo: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -173,9 +204,7 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
         ),
 
         // The guide will take up the remaining space while respecting its aspect ratio
-        Expanded(
-          child: _buildFramingGuide(),
-        ),
+        Expanded(child: _buildFramingGuide()),
 
         // Bottom Control Panel
         Container(
@@ -188,6 +217,11 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                 onPressed: _setGoldenImage,
                 child: const Text('Set Golden Image'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                onPressed: _takePhotoAndSave,
+                child: const Text('Take Photo'),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -212,10 +246,7 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
         aspectRatio: a3AspectRatio,
         child: Container(
           decoration: BoxDecoration(
-            border: Border.all(
-              color: Colors.yellow.withOpacity(0.7),
-              width: 2,
-            ),
+            border: Border.all(color: Colors.yellow.withOpacity(0.7), width: 2),
             borderRadius: BorderRadius.circular(8),
           ),
         ),
