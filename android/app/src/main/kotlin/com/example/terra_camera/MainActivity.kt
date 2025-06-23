@@ -1,4 +1,5 @@
-package com.example.terra_camera
+package ar.net.grasso.terracam
+
 
 import io.flutter.embedding.android.FlutterActivity
 
