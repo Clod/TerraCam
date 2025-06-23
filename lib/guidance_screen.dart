@@ -141,7 +141,7 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Guidance Prototype'),
+        title: const Text('TerraCam '),
         backgroundColor: Colors.black45,
       ),
       body: FutureBuilder<void>(
@@ -214,19 +214,19 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
                 onPressed: _setGoldenImage,
-                child: const Text('Set Golden Image'),
+                child: const Text('Referencia'),
               ),
               ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                 onPressed: _takePhotoAndSave,
-                child: const Text('Take Photo'),
+                child: const Text('Click'),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 onPressed: _clearGoldenImage,
-                child: const Text('Clear'),
+                child: const Text('Reset'),
               ),
             ],
           ),
