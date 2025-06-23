@@ -52,7 +52,7 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
   }
 
   void _initializeSensors() {
-    _sensorsSubscription = accelerometerEvents.listen((
+    _sensorsSubscription = accelerometerEventStream().listen((
       AccelerometerEvent event,
     ) {
       // Simple algorithm to calculate pitch and roll from accelerometer data
@@ -76,8 +76,9 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
     try {
       // Ensure the camera is initialized before taking a picture.
       await _initializeControllerFuture;
-      if (_cameraController == null || !_cameraController!.value.isInitialized) {
-        debugPrint("Camera not initialized or not ready.");
+      if (_cameraController == null ||
+          !_cameraController!.value.isInitialized) {
+        debugPrint("Cámara no inicializada o no disponible.");
         return;
       }
 
@@ -89,15 +90,15 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Photo saved to gallery!')),
+          const SnackBar(content: Text('Foto guardada en la galería')),
         );
       }
     } catch (e) {
       debugPrint("Error taking photo: $e");
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving photo: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error guardando foto: $e')));
       }
     }
   }
@@ -114,6 +115,10 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
       await _initializeControllerFuture;
       final image = await _cameraController!.takePicture();
 
+      // After an async gap, it's crucial to check if the widget is still mounted
+      // before calling setState or accessing the BuildContext.
+      if (!mounted) return;
+
       setState(() {
         _goldenImage = image;
         // Set the current pitch and roll as the target to match
@@ -126,6 +131,11 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
       );
     } catch (e) {
       debugPrint("Error taking picture: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error setting reference: $e')));
+      }
     }
   }
 
@@ -193,12 +203,17 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildAngleIndicator(
-                "Pitch",
+                "Eje menor",
                 _pitch,
                 _targetPitch,
                 isPitchAligned,
               ),
-              _buildAngleIndicator("Roll", _roll, _targetRoll, isRollAligned),
+              _buildAngleIndicator(
+                "Eje mayor",
+                _roll,
+                _targetRoll,
+                isRollAligned,
+              ),
             ],
           ),
         ),
