@@ -1,0 +1,42 @@
+PODS:
+  - camera_avfoundation (0.0.1):
+    - Flutter
+  - Flutter (1.0.0)
+  - gal (1.0.0):
+    - Flutter
+    - FlutterMacOS
+  - path_provider_foundation (0.0.1):
+    - Flutter
+    - FlutterMacOS
+  - sensors_plus (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - camera_avfoundation (from `.symlinks/plugins/camera_avfoundation/ios`)
+  - Flutter (from `Flutter`)
+  - gal (from `.symlinks/plugins/gal/darwin`)
+  - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
+  - sensors_plus (from `.symlinks/plugins/sensors_plus/ios`)
+
+EXTERNAL SOURCES:
+  camera_avfoundation:
+    :path: ".symlinks/plugins/camera_avfoundation/ios"
+  Flutter:
+    :path: Flutter
+  gal:
+    :path: ".symlinks/plugins/gal/darwin"
+  path_provider_foundation:
+    :path: ".symlinks/plugins/path_provider_foundation/darwin"
+  sensors_plus:
+    :path: ".symlinks/plugins/sensors_plus/ios"
+
+SPEC CHECKSUMS:
+  camera_avfoundation: adb0207d868b2d873e895371d88448399ab78d87
+  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  gal: 6a522c75909f1244732d4596d11d6a2f86ff37a5
+  path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
+  sensors_plus: 18a9b346c43e157da17d2c8e99def703f9efb9d8
+
+PODFILE CHECKSUM: 4305caec6b40dde0ae97be1573c53de1882a07e5
+
+COCOAPODS: 1.16.2
