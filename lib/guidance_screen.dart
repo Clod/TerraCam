@@ -188,7 +188,7 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
         // Top Info Panel for Angles
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          color: Colors.black.withOpacity(0.5),
+          color: Colors.black.withAlpha(128),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -209,7 +209,7 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
         // Bottom Control Panel
         Container(
           padding: const EdgeInsets.all(16.0),
-          color: Colors.black.withOpacity(0.5),
+          color: Colors.black.withAlpha(128),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -246,7 +246,7 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
         aspectRatio: a3AspectRatio,
         child: Container(
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.yellow.withOpacity(0.7), width: 2),
+            border: Border.all(color: Colors.yellow.withAlpha(179), width: 2),
             borderRadius: BorderRadius.circular(8),
           ),
         ),
