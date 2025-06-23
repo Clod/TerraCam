@@ -134,21 +134,6 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
                     ),
                   ),
 
-                // Layer 3: Framing Guide (Placeholder)
-                Center(
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.9,
-                    height: MediaQuery.of(context).size.height * 0.7,
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.yellow.withOpacity(0.7),
-                        width: 2,
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-
                 // Layer 4: UI Information and Controls
                 SafeArea(child: _buildControlsAndInfoUI()),
               ],
@@ -168,7 +153,6 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
         _targetRoll != null && (_roll - _targetRoll!).abs() < 2.0;
 
     return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         // Top Info Panel for Angles
         Container(
@@ -186,6 +170,11 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
               _buildAngleIndicator("Roll", _roll, _targetRoll, isRollAligned),
             ],
           ),
+        ),
+
+        // The guide will take up the remaining space while respecting its aspect ratio
+        Expanded(
+          child: _buildFramingGuide(),
         ),
 
         // Bottom Control Panel
@@ -209,6 +198,28 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildFramingGuide() {
+    // A3 paper aspect ratio (portrait) is 297mm / 420mm (width/height)
+    const a3AspectRatio = 297 / 420;
+
+    return Padding(
+      // Padding to ensure the guide doesn't touch the screen edges or UI elements
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+      child: AspectRatio(
+        aspectRatio: a3AspectRatio,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Colors.yellow.withOpacity(0.7),
+              width: 2,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      ),
     );
   }
 
