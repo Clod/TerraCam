@@ -65,3 +65,4 @@ local.properties
 /ios/Flutter/flutter_assets/
 /ios/ServiceDefinitions.json
 .ios/
+README.txt

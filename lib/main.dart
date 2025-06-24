@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Guidance App Prototype',
+      title: 'TerraCam - Prototipo',
       theme: ThemeData.dark(),
       home: const GuidanceScreen(),
     );
