@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 import 'package:gal/gal.dart';
+import 'package:opencv_dart/opencv_dart.dart' as cv;
 
 /// A screen that provides guidance for taking photos from a specific angle and position.
 ///
@@ -52,6 +54,10 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
   /// The target roll in degrees that the user should match. This is set when
   /// the golden image is taken.
   double? _targetRoll;
+
+  /// A threshold for blur detection. If the variance of the Laplacian is below
+  /// this value, the image is considered blurry. This value may need tuning.
+  final double _blurThreshold = 100.0;
 
   @override
   void initState() {
@@ -116,17 +122,75 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
     });
   }
 
+  /// Checks if the given image is blurry by calculating the variance of its Laplacian.
+  ///
+  /// A low variance suggests that there are not many edges in the image, which
+  /// is characteristic of a blurry photo.
+  ///
+  /// [imageFile]: The image to be analyzed.
+  /// Returns a `Future<bool>` which is `true` if the image is blurry, `false` otherwise.
+  Future<bool> _isImageBlurry(XFile imageFile) async {
+    debugPrint("Starting blur check for ${imageFile.path}");
+    try {
+      // 1. Read image bytes from the temporary file.
+      final Uint8List imageBytes = await imageFile.readAsBytes();
+      debugPrint("Image bytes read: ${imageBytes.length} bytes");
+
+      // 2. Decode image to OpenCV's Mat format.
+      // The image is decoded as a color image.
+      final img = cv.imdecode(imageBytes, cv.IMREAD_COLOR);
+      if (img == null || img.isEmpty) {
+        debugPrint("Failed to decode image for blur check.");
+        return false; // Can't determine, assume not blurry to avoid blocking user.
+      }
+      debugPrint("Image decoded successfully. Size: ${img.width}x${img.height}");
+
+      // 3. Convert the image to grayscale for easier edge detection.
+      final gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY);
+      debugPrint("Image converted to grayscale.");
+
+      // 4. Apply the Laplacian operator to the grayscale image.
+      // This operator highlights regions of rapid intensity change (i.e., edges).
+      // A blurry image will have less pronounced edges.
+      // The ddepth parameter is set to CV_64F (a float type) to avoid overflow.
+      // Using the integer value 6, as some environments might have trouble resolving the cv.CV_64F constant.
+      final laplacian = cv.laplacian(gray, 6 /* cv.CV_64F */);
+      debugPrint("Laplacian filter applied.");
+
+      // 5. Calculate the variance of the Laplacian image.
+      // A higher variance indicates more edges and a sharper image.
+      // meanStdDev returns a (Scalar, Scalar) record for mean and stddev.
+      final meanStdDev = cv.meanStdDev(laplacian);
+      // We access the stddev scalar with .$2 and get its first value.
+      final double stdDev = meanStdDev.$2.val1;
+      final double variance = stdDev * stdDev;
+
+      debugPrint("Image Laplacian variance: $variance");
+
+      // 6. Compare the variance to a predefined threshold.
+      final bool isBlurry = variance < _blurThreshold;
+      debugPrint("Image is blurry: $isBlurry (Threshold: $_blurThreshold)");
+      return isBlurry;
+    } catch (e, s) {
+      debugPrint("!!! ERROR checking for blur: $e");
+      debugPrint("!!! Stack trace: $s");
+      // If an error occurs during the check, assume it's not blurry
+      // to not block the user from taking a photo.
+      return false;
+    }
+  }
+
   /// Takes a picture and saves it to the device's gallery.
   ///
   /// This function is typically triggered by a user action, like pressing a button.
   /// It ensures the camera is ready, takes a photo, and uses the `gal` package
   /// to save it. It also provides user feedback via SnackBars.
   void _takePhotoAndSave() async {
+    debugPrint("--- _takePhotoAndSave called ---");
     try {
       // Wait for the camera controller to be initialized.
       await _initializeControllerFuture;
-      if (_cameraController == null ||
-          !_cameraController!.value.isInitialized) {
+      if (!_cameraController!.value.isInitialized) {
         debugPrint("Cámara no inicializada o no disponible.");
         return;
       }
@@ -134,6 +198,20 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
       // Take the picture and get the file.
       final XFile image = await _cameraController!.takePicture();
       debugPrint("Picture taken, temporary path: ${image.path}");
+
+      // Check if the image is blurry before saving.
+      if (await _isImageBlurry(image)) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Imagen borrosa. Intente de nuevo.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        // Do not save the blurry photo.
+        return;
+      }
 
       // Save the image from its temporary path to the device's public gallery.
       await Gal.putImage(image.path);
@@ -144,9 +222,10 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
           const SnackBar(content: Text('Foto guardada en la galería')),
         );
       }
-    } catch (e) {
+    } catch (e, s) {
       // If an error occurs, print it to the console and show an error message.
-      debugPrint("Error taking photo: $e");
+      debugPrint("!!! Error in _takePhotoAndSave: $e");
+      debugPrint("!!! Stack trace: $s");
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -170,15 +249,41 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
   /// and captures the current pitch and roll values as the target orientation
   /// for the user to match in subsequent photos.
   void _setGoldenImage() async {
+    debugPrint("--- _setGoldenImage called ---");
     try {
       // Ensure the camera is initialized before proceeding.
       await _initializeControllerFuture;
+
+      // Add a check to ensure the camera is initialized, similar to _takePhotoAndSave.
+      if (!_cameraController!.value.isInitialized) {
+        debugPrint("Cámara no inicializada o no disponible.");
+        return;
+      }
+
       // Take a picture.
       final image = await _cameraController!.takePicture();
 
       // After an asynchronous operation, it's crucial to check if the widget
       // is still mounted before updating its state or accessing its context.
       if (!mounted) return;
+
+      final bool isBlurry = await _isImageBlurry(image);
+
+      // Check mounted status again after the async blur check.
+      if (!mounted) return;
+
+      // Check if the reference image is blurry.
+      if (isBlurry) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text('La imagen de referencia está borrosa. Intente de nuevo.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        // Do not set a blurry photo as the reference.
+        return;
+      }
 
       // Update the state with the new golden image and target angles.
       setState(() {
@@ -190,11 +295,12 @@ class _GuidanceScreenState extends State<GuidanceScreen> {
 
       // Show a confirmation message to the user.
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Golden Image and Target Angles Set!')),
+        const SnackBar(content: Text('Imagen de referencia establecida.')),
       );
-    } catch (e) {
+    } catch (e, s) {
       // Handle any errors during the process.
-      debugPrint("Error taking picture: $e");
+      debugPrint("!!! Error in _setGoldenImage: $e");
+      debugPrint("!!! Stack trace: $s");
       if (mounted) {
         ScaffoldMessenger.of(
           context,

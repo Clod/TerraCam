@@ -37,6 +37,7 @@ dependencies:
   path: ^1.9.0              # The camera plugin needs this
   vector_math: ^2.1.4       # For angle calculations (radians to degrees)
   gal: ^2.2.0               # For saving images to the gallery
+  opencv_dart: ^1.0.4       # For image processing like blur detection
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
